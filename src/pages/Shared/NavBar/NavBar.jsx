@@ -1,121 +1,142 @@
 import { useState, useEffect, useRef } from "react";
-import { ShoppingCart, Search, ChevronDown, User, Heart, Menu, X, Bird, Cat, Package, Utensils, Tag, LayoutDashboard, LogOut, Settings, Bell } from "lucide-react";
-import './NavBar.css'
+import { Link } from "react-router-dom";
+import {
+  ShoppingCart, Search, ChevronDown, User, Heart,
+  Menu, X, Bird, Cat, Package, Utensils,
+  LayoutDashboard, LogOut, Settings, Bell,
+} from "lucide-react";
+import { useContext } from "react";
+import { AuthContext } from "../../../providers/AuthProvider";
+import "./NavBar.css";
+import logo from "../../../assets/logo1.png"
+
+// ─── Static Data ──────────────────────────────────────────────────────────────
 
 const NAV_LINKS = [
   {
     label: "Shop",
     dropdown: [
-      { label: "Birds", icon: <Bird size={15} />, href: "/shop/birds" },
-      { label: "Cats", icon: <Cat size={15} />, href: "/shop/cats" },
-      { label: "All Pets", icon: <Package size={15} />, href: "/shop/all" },
+      { label: "Birds",    icon: <Bird size={14} />,    href: "/shop/birds", tag: "Popular" },
+      { label: "Cats",     icon: <Cat size={14} />,     href: "/shop/cats",  tag: null },
+      { label: "All Pets", icon: <Package size={14} />, href: "/shop/all",   tag: null },
     ],
   },
   {
     label: "Food & Treats",
     dropdown: [
-      { label: "Bird Food", icon: <Utensils size={15} />, href: "/food/birds" },
-      { label: "Cat Food", icon: <Utensils size={15} />, href: "/food/cats" },
+      { label: "Bird Food", icon: <Utensils size={14} />, href: "/food/birds", tag: null },
+      { label: "Cat Food",  icon: <Utensils size={14} />, href: "/food/cats",  tag: null },
     ],
   },
   {
     label: "Accessories",
     dropdown: [
-      { label: "Cages & Perches", icon: <Package size={15} />, href: "/accessories/cages" },
-      { label: "Toys", icon: <Package size={15} />, href: "/accessories/toys" },
-      { label: "Grooming", icon: <Package size={15} />, href: "/accessories/grooming" },
+      { label: "Cages & Perches", icon: <Package size={14} />, href: "/accessories/cages",    tag: null },
+      { label: "Toys",            icon: <Package size={14} />, href: "/accessories/toys",     tag: "New ✦" },
+      { label: "Grooming",        icon: <Package size={14} />, href: "/accessories/grooming", tag: null },
     ],
   },
-  { label: "Sell Your Pet", href: "/sell", dropdown: null },
-  { label: "Adoption", href: "/adopt", dropdown: null },
+  { label: "Sell Your Pet", href: "/sell",  dropdown: null },
+  { label: "Adoption",      href: "/adopt", dropdown: null },
 ];
 
 const PROFILE_MENU = [
-  { label: "Dashboard", icon: <LayoutDashboard size={15} />, href: "/dashboard" },
-  { label: "My Orders", icon: <Package size={15} />, href: "/orders" },
-  { label: "Wishlist", icon: <Heart size={15} />, href: "/wishlist" },
-  { label: "Notifications", icon: <Bell size={15} />, href: "/notifications" },
-  { label: "Settings", icon: <Settings size={15} />, href: "/settings" },
-  { label: "Logout", icon: <LogOut size={15} />, href: "/logout", danger: true },
+  { label: "Dashboard",     icon: <LayoutDashboard size={14} />, href: "/dashboard",     danger: false },
+  { label: "My Orders",     icon: <Package size={14} />,         href: "/orders",         danger: false },
+  { label: "Wishlist",      icon: <Heart size={14} />,           href: "/wishlist",       danger: false },
+  { label: "Notifications", icon: <Bell size={14} />,            href: "/notifications",  danger: false },
+  { label: "Settings",      icon: <Settings size={14} />,        href: "/settings",       danger: false },
+  { label: "Logout",        icon: <LogOut size={14} />,          href: "/logout",         danger: true  },
 ];
 
-export default function Navbar() {
-  const [scrolled, setScrolled] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
+// ─── Paw Logo ─────────────────────────────────────────────────────────────────
+
+const PawLogo = ({ size = 32 }) => (
+  <svg width={size} height={size} viewBox="0 0 40 40" fill="none">
+    <path d="M20 6 L31 12 L31 28 L20 34 L9 28 L9 12 Z" fill="#16a34a" />
+    <path
+      d="M20 12 L26 16 L26 24 L20 28 L14 24 L14 16 Z"
+      fill="none" stroke="white" strokeWidth="1.2" strokeOpacity="0.5"
+    />
+    <circle cx="14" cy="10" r="3.2" fill="#16a34a" />
+    <circle cx="20" cy="7.5" r="3.2" fill="#16a34a" />
+    <circle cx="26" cy="10"  r="3.2" fill="#16a34a" />
+    <circle cx="20" cy="20"  r="2"   fill="white" fillOpacity="0.6" />
+  </svg>
+);
+
+// ─── Navbar ───────────────────────────────────────────────────────────────────
+
+const Navbar = () => {
+  const { user, logOut } = useContext(AuthContext);
+
+  const [scrolled,       setScrolled]       = useState(false);
+  const [mobileOpen,     setMobileOpen]     = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
-  const [profileOpen, setProfileOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [profileOpen,    setProfileOpen]    = useState(false);
+  const [searchOpen,     setSearchOpen]     = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState(null);
 
-  const navRef = useRef(null);
-  const profileRef = useRef(null);
+  const rootRef = useRef(null);
 
+  const handleLogOut = () => logOut().catch((err) => console.error(err));
+
+  // Close mobile menu on desktop resize
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    const onResize = () => { if (window.innerWidth >= 1024) setMobileOpen(false); };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
   }, []);
 
+  // Sticky shadow on scroll
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (navRef.current && !navRef.current.contains(e.target)) {
+    const onScroll = () => setScrolled(window.scrollY > 10);
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handler = (e) => {
+      if (rootRef.current && !rootRef.current.contains(e.target)) {
         setActiveDropdown(null);
         setProfileOpen(false);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, []);
-
-  const isLoggedIn = true; // Toggle for demo
 
   return (
     <>
-      {/* Google Fonts */}
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&display=swap');
-
-       
-      `}</style>
-
       <nav
-        ref={navRef}
-        className={`nav-root fixed top-0 left-0 right-0 z-50 transition-all duration-500 cloud-bg ${scrolled
-            ? "bg-[#0f1a14]/95 backdrop-blur-xl shadow-[0_4px_40px_rgba(0,0,0,0.4)] border-b border-[#86c5a2]/10"
-            : "bg-gradient-to-b from-[#0a1210]/90 to-transparent backdrop-blur-sm"
-          }`}
+        ref={rootRef}
+        className={`nb-root nb-bar fixed top-0 left-0 right-0 z-50 ${scrolled ? "nb-bar--stuck" : ""}`}
       >
-        {/* Decorative feather shapes */}
-        <svg className="feather-deco top-0 right-32 w-24 h-8" viewBox="0 0 120 40">
-          <path d="M10,20 Q40,-5 80,8 Q110,18 115,22 Q80,35 40,28 Q15,23 10,20Z" fill="#86c5a2" />
-          <path d="M10,20 Q60,15 115,22" stroke="#86c5a2" strokeWidth="0.8" fill="none" />
-        </svg>
-        <svg className="feather-deco top-1 left-48 w-16 h-6" viewBox="0 0 80 30">
-          <path d="M5,15 Q25,-3 55,6 Q72,13 76,16 Q55,26 28,20 Q8,16 5,15Z" fill="#d4a853" />
-          <path d="M5,15 Q40,12 76,16" stroke="#d4a853" strokeWidth="0.6" fill="none" />
-        </svg>
+        {/* ── Announcement Strip ── */}
+        <div className="nb-announcement">
+          🐦 Free delivery on orders over ৳999 &nbsp;·&nbsp; 🐾 100% verified breeders
+        </div>
 
+        {/* ── Main Row ── */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          {/* Main Nav Row */}
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between h-16 gap-6">
 
             {/* Logo */}
-            <a href="/" className="flex items-center gap-2.5 group flex-shrink-0">
-              <div className="relative w-9 h-9">
-                <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-[#86c5a2] to-[#4a9970] flex items-center justify-center shadow-lg shadow-[#86c5a2]/20 group-hover:shadow-[#86c5a2]/40 transition-shadow duration-300">
-                  <Bird size={18} className="text-[#0a1210]" strokeWidth={2.2} />
-                </div>
-                <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[#d4a853] border-2 border-[#0f1a14]" />
-              </div>
+            <Link to="/" className="flex items-center gap-2.5 flex-shrink-0" style={{ textDecoration: "none" }}>
+              <img className="w-14 h-14" src={logo} alt="" />
               <div className="flex flex-col leading-none">
-                <span className="logo-text text-[1.15rem] font-bold text-white tracking-wide">NestNook</span>
-                <span className="text-[0.6rem] font-medium tracking-[0.18em] text-[#86c5a2] uppercase">Pets & Beyond</span>
+                <span className="nb-brand text-lg font-bold tracking-tight" style={{ color: "var(--nb-text)" }}>
+                  Petzu
+                </span>
+                <span className="text-[0.6rem] font-medium tracking-[0.15em] uppercase" style={{ color: "var(--nb-green)" }}>
+                  Pets &amp; Beyond
+                </span>
               </div>
-            </a>
+            </Link>
 
-            {/* Desktop Nav Links */}
-            <div className="hidden lg:flex items-center gap-1">
+            {/* ── Desktop Nav ── */}
+            <div className="hidden lg:flex items-center gap-0.5 flex-1 justify-center">
               {NAV_LINKS.map((link) =>
                 link.dropdown ? (
                   <div
@@ -124,235 +145,245 @@ export default function Navbar() {
                     onMouseEnter={() => setActiveDropdown(link.label)}
                     onMouseLeave={() => setActiveDropdown(null)}
                   >
-                    <button className="nav-link-hover flex items-center gap-1 px-4 py-2 text-sm font-medium text-[#c8d9ce] hover:text-white transition-colors duration-200">
+                    <button className={`nb-navlink ${activeDropdown === link.label ? "nb-navlink--open" : ""}`}>
                       {link.label}
                       <ChevronDown
                         size={13}
-                        className={`transition-transform duration-200 ${activeDropdown === link.label ? "rotate-180 text-[#86c5a2]" : ""}`}
+                        style={{ color: "var(--nb-green)" }}
+                        className={`transition-transform duration-200 ${activeDropdown === link.label ? "rotate-180" : ""}`}
                       />
                     </button>
 
                     {activeDropdown === link.label && (
-                      <div className="dropdown-enter absolute top-full left-0 pt-2">
-                        <div className="bg-[#0f1f17]/95 backdrop-blur-xl border border-[#86c5a2]/15 rounded-xl shadow-2xl shadow-black/60 overflow-hidden min-w-[180px]">
-                          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#86c5a2]/40 to-transparent" />
+                      <div className="nb-dropdown absolute top-full left-0 pt-2 z-50">
+                        <div className="nb-dropdown-panel">
+                          <div className="nb-dropdown-accent" />
                           {link.dropdown.map((item) => (
-                            <a
-                              key={item.label}
-                              href={item.href}
-                              className="flex items-center gap-3 px-4 py-3 text-sm text-[#a8c4b0] hover:text-white hover:bg-[#86c5a2]/10 transition-colors duration-150 group/item"
-                            >
-                              <span className="text-[#86c5a2] group-hover/item:scale-110 transition-transform duration-150">
-                                {item.icon}
-                              </span>
-                              {item.label}
-                            </a>
+                            <Link key={item.label} to={item.href} className="nb-di-item">
+                              <span className="nb-di-item__icon">{item.icon}</span>
+                              <span className="flex-1">{item.label}</span>
+                              {item.tag && <span className="nb-di-item__tag">{item.tag}</span>}
+                            </Link>
                           ))}
                         </div>
                       </div>
                     )}
                   </div>
                 ) : (
-                  <a
-                    key={link.label}
-                    href={link.href}
-                    className="nav-link-hover px-4 py-2 text-sm font-medium text-[#c8d9ce] hover:text-white transition-colors duration-200"
-                  >
+                  <Link key={link.label} to={link.href} className="nb-navlink">
                     {link.label}
-                  </a>
+                  </Link>
                 )
               )}
             </div>
 
-            {/* Right Icons */}
-            <div className="flex items-center gap-1.5">
+            {/* ── Right Actions ── */}
+            <div className="flex items-center gap-1">
 
               {/* Search */}
               <button
-                onClick={() => setSearchOpen(!searchOpen)}
-                className={`p-2.5 rounded-xl transition-all duration-200 ${searchOpen
-                    ? "bg-[#86c5a2]/15 text-[#86c5a2]"
-                    : "text-[#a8c4b0] hover:text-white hover:bg-white/5"
-                  }`}
+                className={`nb-iconbtn ${searchOpen ? "nb-iconbtn--active" : ""}`}
+                onClick={() => setSearchOpen((p) => !p)}
               >
                 <Search size={18} />
               </button>
 
               {/* Wishlist */}
-              <button className="hidden sm:flex p-2.5 rounded-xl text-[#a8c4b0] hover:text-[#e8819a] hover:bg-white/5 transition-all duration-200 relative">
+              <button className="nb-iconbtn hidden sm:flex">
                 <Heart size={18} />
-                <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[#e8819a]" />
+                <span className="nb-wishlist-dot" />
               </button>
 
               {/* Cart */}
-              <button className="p-2.5 rounded-xl text-[#a8c4b0] hover:text-white hover:bg-white/5 transition-all duration-200 relative">
+              <button className="nb-iconbtn">
                 <ShoppingCart size={18} />
-                <span className="cart-badge absolute -top-0.5 -right-0.5 w-4.5 h-4.5 min-w-[18px] px-1 rounded-full bg-[#d4a853] text-[#0a1210] text-[10px] font-bold flex items-center justify-center leading-none">
-                  3
-                </span>
+                <span className="nb-cart-badge">3</span>
               </button>
 
-              {/* Profile */}
-              <div className="relative hidden sm:block" ref={profileRef}>
+              {/* Profile — desktop only */}
+              <div className="relative hidden sm:block ml-1">
                 <button
-                  onClick={() => setProfileOpen(!profileOpen)}
-                  className={`flex items-center gap-2 ml-1 pl-3 pr-2 py-1.5 rounded-xl border transition-all duration-200 ${profileOpen
-                      ? "border-[#86c5a2]/40 bg-[#86c5a2]/10"
-                      : "border-transparent hover:border-[#86c5a2]/20 hover:bg-white/5"
-                    }`}
+                  onClick={() => setProfileOpen((p) => !p)}
+                  className={`nb-profilebtn ${profileOpen ? "nb-profilebtn--open" : ""}`}
                 >
-                  <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#86c5a2] to-[#4a9970] flex items-center justify-center flex-shrink-0">
-                    <User size={14} className="text-[#0a1210]" />
+                  <div className="nb-avatar">
+                    {user?.photoURL
+                      ? <img src={user.photoURL} className="w-full h-full rounded-full object-cover" alt="" />
+                      : <User size={13} color="white" />
+                    }
                   </div>
+                  <span className="text-sm font-medium hidden md:block" style={{ color: "var(--nb-text)" }}>
+                    {user?.displayName?.split(" ")[0] || "Account"}
+                  </span>
                   <ChevronDown
                     size={13}
-                    className={`text-[#86c5a2] transition-transform duration-200 ${profileOpen ? "rotate-180" : ""}`}
+                    style={{ color: "var(--nb-green)" }}
+                    className={`transition-transform duration-200 ${profileOpen ? "rotate-180" : ""}`}
                   />
                 </button>
 
                 {profileOpen && (
-                  <div className="dropdown-enter absolute top-full right-0 pt-2 z-50">
-                    <div className="bg-[#0f1f17]/97 backdrop-blur-xl border border-[#86c5a2]/15 rounded-xl shadow-2xl shadow-black/70 overflow-hidden w-52">
-                      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#86c5a2]/40 to-transparent" />
-
-                      {/* Profile Header */}
-                      <div className="px-4 pt-4 pb-3 border-b border-[#86c5a2]/10">
+                  <div className="nb-dropdown absolute top-full right-0 pt-2 z-50">
+                    <div className="nb-dropdown-panel w-56">
+                      {/* User Header */}
+                      <div className="nb-profile-header">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#86c5a2] to-[#4a9970] flex items-center justify-center">
-                            <User size={16} className="text-[#0a1210]" />
+                          <div className="nb-avatar nb-avatar--lg">
+                            {user?.photoURL
+                              ? <img src={user.photoURL} className="w-full h-full rounded-full object-cover" alt="" />
+                              : <User size={16} color="white" />
+                            }
                           </div>
                           <div>
-                            <p className="text-sm font-semibold text-white">Rafsan Ahmed</p>
-                            <p className="text-xs text-[#86c5a2]">rafsan@email.com</p>
+                            <p className="text-sm font-semibold" style={{ color: "var(--nb-text)" }}>
+                              {user?.displayName || "Guest"}
+                            </p>
+                            <p className="text-xs" style={{ color: "var(--nb-green)" }}>
+                              {user?.email || ""}
+                            </p>
                           </div>
                         </div>
                       </div>
 
-                      {PROFILE_MENU.map((item, i) => (
-                        <a
-                          key={item.label}
-                          href={item.href}
-                          className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors duration-150 group/pm ${item.danger
-                              ? "text-[#e87b7b] hover:bg-[#e87b7b]/10 border-t border-[#86c5a2]/10 mt-1"
-                              : "text-[#a8c4b0] hover:text-white hover:bg-[#86c5a2]/10"
-                            }`}
-                        >
-                          <span className={`transition-transform duration-150 group-hover/pm:translate-x-0.5 ${item.danger ? "text-[#e87b7b]" : "text-[#86c5a2]"}`}>
-                            {item.icon}
-                          </span>
-                          {item.label}
-                        </a>
-                      ))}
+                      {PROFILE_MENU.map((item, i) =>
+                        item.danger ? (
+                          <button
+                            key={item.label}
+                            onClick={handleLogOut}
+                            className={`nb-pm-item nb-pm-item--danger nb-pm-item--sep w-full`}
+                            style={{ background: "none", border: "none", cursor: "pointer" }}
+                          >
+                            <span style={{ color: "var(--nb-red)" }}>{item.icon}</span>
+                            {item.label}
+                          </button>
+                        ) : (
+                          <Link
+                            key={item.label}
+                            to={item.href}
+                            className={`nb-pm-item ${i === PROFILE_MENU.length - 1 ? "nb-pm-item--sep" : ""}`}
+                          >
+                            <span style={{ color: "var(--nb-green)" }}>{item.icon}</span>
+                            {item.label}
+                          </Link>
+                        )
+                      )}
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* Mobile Menu Toggle */}
+              {/* Mobile Hamburger — only shown below lg */}
               <button
-                onClick={() => setMobileOpen(!mobileOpen)}
-                className="lg:hidden p-2.5 rounded-xl text-[#a8c4b0] hover:text-white hover:bg-white/5 transition-all duration-200 ml-1"
+                className="nb-iconbtn lg:hidden ml-1"
+                onClick={() => setMobileOpen((p) => !p)}
               >
                 {mobileOpen ? <X size={20} /> : <Menu size={20} />}
               </button>
             </div>
           </div>
 
-          {/* Search Bar */}
+          {/* ── Search Bar ── */}
           {searchOpen && (
-            <div className="search-slide pb-3 overflow-hidden">
-              <div className="relative">
-                <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#86c5a2]" />
+            <div className="nb-searchbar">
+              <div className="nb-search-wrap">
+                <Search size={16} className="nb-search-icon" />
                 <input
-                  type="text"
                   autoFocus
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search pets, food, accessories..."
-                  className="w-full bg-[#0f1f17]/80 border border-[#86c5a2]/20 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-[#5a7a62] focus:outline-none focus:border-[#86c5a2]/50 focus:bg-[#0f1f17] transition-all duration-200"
+                  type="text"
+                  placeholder="Search birds, cats, food, accessories…"
+                  className="nb-searchinput"
                 />
-                <kbd className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-[#5a7a62] border border-[#5a7a62]/30 rounded px-1.5 py-0.5 hidden sm:block">
-                  ESC
-                </kbd>
               </div>
             </div>
           )}
         </div>
 
-        {/* Mobile Menu */}
+        {/* ── Mobile Menu — CSS hides it on desktop regardless of state ── */}
         {mobileOpen && (
-          <div className="mobile-menu-enter lg:hidden bg-[#0a1610]/98 backdrop-blur-xl border-t border-[#86c5a2]/10 max-h-[80vh] overflow-y-auto">
-            <div className="px-4 py-4 space-y-1">
+          <div className="nb-mobile-menu">
+            <div className="px-3 py-3 space-y-0.5">
+
               {NAV_LINKS.map((link) => (
                 <div key={link.label}>
                   {link.dropdown ? (
                     <>
                       <button
+                        className="nb-mobile-link"
                         onClick={() => setMobileExpanded(mobileExpanded === link.label ? null : link.label)}
-                        className="w-full flex items-center justify-between px-3 py-3 rounded-xl text-sm font-medium text-[#c8d9ce] hover:bg-[#86c5a2]/10 hover:text-white transition-colors duration-150"
                       >
                         {link.label}
                         <ChevronDown
                           size={14}
-                          className={`text-[#86c5a2] transition-transform duration-200 ${mobileExpanded === link.label ? "rotate-180" : ""}`}
+                          style={{ color: "var(--nb-green)" }}
+                          className={`transition-transform duration-200 ${mobileExpanded === link.label ? "rotate-180" : ""}`}
                         />
                       </button>
                       {mobileExpanded === link.label && (
-                        <div className="ml-4 mt-1 space-y-0.5 border-l border-[#86c5a2]/15 pl-3">
+                        <div className="nb-mobile-sub">
                           {link.dropdown.map((item) => (
-                            <a
-                              key={item.label}
-                              href={item.href}
-                              className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-[#8ab09a] hover:text-white hover:bg-[#86c5a2]/10 transition-colors duration-150"
-                            >
-                              <span className="text-[#86c5a2]">{item.icon}</span>
+                            <Link key={item.label} to={item.href} className="nb-di-item">
+                              <span className="nb-di-item__icon">{item.icon}</span>
                               {item.label}
-                            </a>
+                            </Link>
                           ))}
                         </div>
                       )}
                     </>
                   ) : (
-                    <a
-                      href={link.href}
-                      className="flex items-center px-3 py-3 rounded-xl text-sm font-medium text-[#c8d9ce] hover:bg-[#86c5a2]/10 hover:text-white transition-colors duration-150"
-                    >
+                    <Link to={link.href} className="nb-mobile-link">
                       {link.label}
-                    </a>
+                    </Link>
                   )}
                 </div>
               ))}
 
               {/* Mobile Profile Section */}
-              <div className="border-t border-[#86c5a2]/10 pt-3 mt-3">
-                <div className="flex items-center gap-3 px-3 py-3 rounded-xl bg-[#86c5a2]/5 mb-2">
-                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#86c5a2] to-[#4a9970] flex items-center justify-center">
-                    <User size={16} className="text-[#0a1210]" />
+              <div className="nb-mobile-profile">
+                <div className="nb-mobile-profile-header">
+                  <div className="nb-avatar nb-avatar--lg">
+                    {user?.photoURL
+                      ? <img src={user.photoURL} className="w-full h-full rounded-full object-cover" alt="" />
+                      : <User size={16} color="white" />
+                    }
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-white">Rafsan Ahmed</p>
-                    <p className="text-xs text-[#86c5a2]">View Profile</p>
+                    <p className="text-sm font-semibold" style={{ color: "var(--nb-text)" }}>
+                      {user?.displayName || "Guest"}
+                    </p>
+                    <p className="text-xs" style={{ color: "var(--nb-green)" }}>
+                      {user?.email || ""}
+                    </p>
                   </div>
                 </div>
-                {PROFILE_MENU.map((item) => (
-                  <a
-                    key={item.label}
-                    href={item.href}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors duration-150 ${item.danger ? "text-[#e87b7b] hover:bg-[#e87b7b]/10" : "text-[#a8c4b0] hover:text-white hover:bg-[#86c5a2]/10"
-                      }`}
-                  >
-                    <span className={item.danger ? "text-[#e87b7b]" : "text-[#86c5a2]"}>{item.icon}</span>
-                    {item.label}
-                  </a>
-                ))}
+
+                {PROFILE_MENU.map((item) =>
+                  item.danger ? (
+                    <button
+                      key={item.label}
+                      onClick={handleLogOut}
+                      className="nb-pm-item nb-pm-item--danger w-full"
+                      style={{ background: "none", border: "none", cursor: "pointer" }}
+                    >
+                      <span style={{ color: "var(--nb-red)" }}>{item.icon}</span>
+                      {item.label}
+                    </button>
+                  ) : (
+                    <Link key={item.label} to={item.href} className="nb-pm-item">
+                      <span style={{ color: "var(--nb-green)" }}>{item.icon}</span>
+                      {item.label}
+                    </Link>
+                  )
+                )}
               </div>
             </div>
           </div>
         )}
       </nav>
 
-      {/* Spacer */}
-      <div className="h-16" />
+      {/* Spacer: announcement(28px) + navbar(64px) = 92px */}
+      <div className="nb-spacer" />
     </>
   );
-}
+};
+
+export default Navbar;

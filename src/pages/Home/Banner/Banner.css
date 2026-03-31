@@ -1,0 +1,250 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Lato:wght@300;400&display=swap');
+
+/* ─── Root ──────────────────────────────────────────────────────────────────── */
+.bn-root {
+  position: relative;
+  width: 100%;
+  height: 560px;
+  overflow: hidden;
+  background: #0f1a13;
+  font-family: 'Lato', sans-serif;
+}
+
+@media (max-width: 768px) {
+  .bn-root { height: 480px; }
+}
+@media (max-width: 480px) {
+  .bn-root { height: 420px; }
+}
+
+/* ─── Slide ─────────────────────────────────────────────────────────────────── */
+.bn-slide {
+  position: absolute;
+  inset: 0;
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.bn-slide--hidden {
+  opacity: 0;
+  transform: scale(1.03);
+  pointer-events: none;
+}
+.bn-slide--active {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+}
+
+/* ─── Background Image ──────────────────────────────────────────────────────── */
+.bn-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transition: transform 8s ease;
+}
+.bn-slide--active .bn-bg {
+  transform: scale(1.06);
+}
+.bn-slide--hidden .bn-bg {
+  transform: scale(1);
+}
+
+/* ─── Overlay ───────────────────────────────────────────────────────────────── */
+.bn-overlay {
+  position: absolute;
+  inset: 0;
+}
+
+/* ─── Content Area ──────────────────────────────────────────────────────────── */
+.bn-content {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0 72px;
+}
+
+@media (max-width: 640px) {
+  .bn-content { padding: 0 20px; }
+}
+
+/* ─── Inner (animated in) ───────────────────────────────────────────────────── */
+.bn-inner {
+  max-width: 580px;
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity 0.55s ease 0.15s, transform 0.55s ease 0.15s;
+}
+.bn-inner--in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ─── Tag Pill ──────────────────────────────────────────────────────────────── */
+.bn-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 5px 12px;
+  border-radius: 9999px;
+  margin-bottom: 18px;
+}
+
+/* ─── Headline ──────────────────────────────────────────────────────────────── */
+.bn-headline {
+  font-family: 'Sora', sans-serif;
+  font-size: clamp(2rem, 4.5vw, 3.2rem);
+  font-weight: 800;
+  line-height: 1.12;
+  color: #ffffff;
+  margin-bottom: 16px;
+  text-shadow: 0 2px 20px rgba(0,0,0,0.3);
+}
+
+/* ─── Sub Text ──────────────────────────────────────────────────────────────── */
+.bn-sub {
+  font-size: clamp(0.875rem, 1.6vw, 1rem);
+  font-weight: 300;
+  color: rgba(255,255,255,0.82);
+  line-height: 1.65;
+  margin-bottom: 28px;
+  max-width: 460px;
+}
+
+/* ─── CTAs ──────────────────────────────────────────────────────────────────── */
+.bn-ctas {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.bn-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: white;
+  text-decoration: none;
+  transition: opacity 0.18s, transform 0.18s, box-shadow 0.18s;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.25);
+  font-family: 'Lato', sans-serif;
+}
+.bn-btn-primary:hover {
+  opacity: 0.88;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
+
+.bn-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 22px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: white;
+  text-decoration: none;
+  border: 1.5px solid rgba(255,255,255,0.4);
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(6px);
+  transition: background 0.18s, border-color 0.18s, transform 0.18s;
+  font-family: 'Lato', sans-serif;
+}
+.bn-btn-ghost:hover {
+  background: rgba(255,255,255,0.16);
+  border-color: rgba(255,255,255,0.7);
+  transform: translateY(-2px);
+}
+
+/* ─── Prev / Next Arrows ────────────────────────────────────────────────────── */
+.bn-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.12);
+  border: 1.5px solid rgba(255,255,255,0.25);
+  color: white;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition: background 0.18s, transform 0.18s, border-color 0.18s;
+}
+.bn-arrow:hover {
+  background: rgba(255,255,255,0.25);
+  border-color: rgba(255,255,255,0.6);
+  transform: translateY(-50%) scale(1.08);
+}
+.bn-arrow--left  { left: 20px; }
+.bn-arrow--right { right: 20px; }
+
+@media (max-width: 480px) {
+  .bn-arrow { display: none; }
+}
+
+/* ─── Dot Indicators ────────────────────────────────────────────────────────── */
+.bn-dots {
+  position: absolute;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bn-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: rgba(255,255,255,0.35);
+  border: none;
+  cursor: pointer;
+  transition: width 0.3s ease, background 0.3s ease;
+  padding: 0;
+}
+.bn-dot--active {
+  width: 28px;
+  background: var(--bn-accent, #16a34a);
+}
+
+/* ─── Progress Bar ──────────────────────────────────────────────────────────── */
+.bn-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: rgba(255,255,255,0.12);
+  z-index: 10;
+}
+
+.bn-progress-fill {
+  height: 100%;
+  background: var(--bn-accent, #16a34a);
+  width: 0%;
+  animation: bnProgress linear forwards;
+}
+
+@keyframes bnProgress {
+  from { width: 0%; }
+  to   { width: 100%; }
+}
